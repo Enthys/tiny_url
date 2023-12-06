@@ -6,6 +6,7 @@ import (
 
 	"github.com/Enthys/book-tracker/internal/data"
 	"github.com/Enthys/book-tracker/internal/logger"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 const version = "1.0.0"
