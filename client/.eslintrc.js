@@ -11,4 +11,5 @@ module.exports = {
   rules: {
     'vue/multi-word-component-names': 'off',
   },
+  include: ['./src/models/**/*.ts']
 }
