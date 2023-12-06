@@ -42,7 +42,7 @@ func loadConfig() *config {
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idle connections")
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL max connection idle time")
 
-	flag.Func("cors-allowed-origins", "CORS allowed origins", func(s string) error {
+	flag.Func("cors-trusted-origins", "CORS allowed origins", func(s string) error {
 		cfg.cors.trustedOrigins = strings.Fields(s)
 		return nil
 	})
