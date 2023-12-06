@@ -3,6 +3,9 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/Enthys/book-tracker/internal/data"
+	"github.com/tomasen/realip"
 )
 
 func (app *application) recoverPanic(next http.Handler) http.Handler {
@@ -40,6 +43,24 @@ func (app *application) enableCORS(next http.Handler) http.Handler {
 				}
 			}
 		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *application) recordVisit(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		app.background(func() {
+			visit := data.ClientVisit{
+				IP:         realip.FromRequest(r),
+				RequestUrl: r.URL.String(),
+				UserAgent:  r.UserAgent(),
+			}
+
+			if err := app.models.ClientVisits.Insert(visit); err != nil {
+				app.logger.Error(err.Error(), nil)
+			}
+		})
 
 		next.ServeHTTP(w, r)
 	})

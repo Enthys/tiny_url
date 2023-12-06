@@ -19,13 +19,16 @@ func main() {
 		logger.Fatal(err.Error(), nil)
 	}
 
-	_, err := openDB(*config)
+	db, err := openDB(*config)
 	if err != nil {
 		logger.Fatal(err.Error(), nil)
 	}
 	logger.Info("Database connection established", nil)
 
-	models := data.Models{}
+	models := data.Models{
+		ShortUrl:     data.ShortUrlModel{DB: db},
+		ClientVisits: data.ClientVisitModel{DB: db},
+	}
 
 	app := New(config, logger, models)
 

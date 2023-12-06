@@ -1,17 +1,23 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/Enthys/book-tracker/internal/data"
 	"github.com/Enthys/book-tracker/internal/logger"
-	"github.com/julienschmidt/httprouter"
 )
 
 type application struct {
+	wg     sync.WaitGroup
 	config *config
 	logger logger.Logger
 	models data.Models
@@ -35,16 +41,49 @@ func (app *application) serve() error {
 		ErrorLog:     log.New(app.logger, "", 0),
 	}
 
-	app.logger.Info("Starting server", map[string]interface{}{"port": app.config.port})
-	return srv.ListenAndServe()
-}
+	shutdownError := make(chan error)
 
-func (app *application) router() http.Handler {
-	router := httprouter.New()
-	router.NotFound = http.HandlerFunc(app.notFoundError)
-	router.MethodNotAllowed = http.HandlerFunc(app.methodNotAllowedError)
+	go func() {
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+		s := <-quit
 
-	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", app.health)
+		app.logger.Info("shutting down server", map[string]string{
+			"signal": s.String(),
+		})
 
-	return app.recoverPanic(router)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		err := srv.Shutdown(ctx)
+		if err != nil {
+			shutdownError <- err
+		}
+
+		app.logger.Info("completing background tasks", map[string]string{
+			"addr": srv.Addr,
+		})
+
+		app.wg.Wait()
+		shutdownError <- nil
+	}()
+
+	app.logger.Info("starting server", map[string]string{
+		"addr": srv.Addr,
+	})
+
+	err := srv.ListenAndServe()
+	if !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+
+	if err = <-shutdownError; err != nil {
+		return err
+	}
+
+	app.logger.Info("stopped server", map[string]string{
+		"addr": srv.Addr,
+	})
+
+	return nil
 }

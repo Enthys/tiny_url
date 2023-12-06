@@ -63,3 +63,7 @@ func (app *application) methodNotAllowedError(w http.ResponseWriter, r *http.Req
 		nil,
 	)
 }
+
+func (app *application) failedValidationResponse(w http.ResponseWriter, r *http.Request, errors map[string]string) {
+	app.writeJson(w, http.StatusUnprocessableEntity, envelope{"error": errors}, nil)
+}

@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dest interface{}) error {
@@ -74,4 +77,34 @@ func (app *application) logError(r *http.Request, err error) {
 		"request_method": r.Method,
 		"request_url":    r.URL.String(),
 	})
+}
+
+func (app *application) background(fn func()) {
+	app.wg.Add(1)
+
+	go func() {
+		defer app.wg.Done()
+
+		defer func() {
+			if err := recover(); err != nil {
+				app.logger.Error(fmt.Sprintf("%s", err), nil)
+			}
+		}()
+
+		fn()
+	}()
+}
+
+func readIntQueryParam(r *http.Request, key string, defaultValue int) int {
+	value, err := strconv.Atoi(r.URL.Query().Get(key))
+
+	if err != nil {
+		return defaultValue
+	}
+
+	return value
+}
+
+func readIntRouteParam(r *http.Request, key string) (int, error) {
+	return strconv.Atoi(httprouter.ParamsFromContext(r.Context()).ByName(key))
 }

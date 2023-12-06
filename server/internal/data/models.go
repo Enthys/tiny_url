@@ -8,4 +8,6 @@ var (
 )
 
 type Models struct {
+	ShortUrl     ShortUrlModel
+	ClientVisits ClientVisitModel
 }

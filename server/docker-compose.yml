@@ -1,8 +1,11 @@
-version: "3" 
+version: "3"
+
+volumes:
+  database_vol:
 
 services:
   app:
-    container_name: application
+    container_name: tiny_url
     build:
       context: .
       dockerfile: ./docker/Dockerfile
@@ -14,9 +17,11 @@ services:
       - '4000:80'
 
   database:
-    container_name: database
+    container_name: tiny_url_database
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin_password
-      POSTGRES_DB: application
+      POSTGRES_DB: tiny_url
+    volumes:
+      - database_vol:/var/lib/postgresql/data
