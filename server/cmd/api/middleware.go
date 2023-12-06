@@ -53,6 +53,8 @@ func (app *application) recordVisit(next http.Handler) http.Handler {
 		app.background(func() {
 			visit := data.ClientVisit{
 				IP:         realip.FromRequest(r),
+				Method:     r.Method,
+				Origin:     r.Header.Get("Origin"),
 				RequestUrl: r.URL.String(),
 				UserAgent:  r.UserAgent(),
 			}
