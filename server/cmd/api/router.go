@@ -18,5 +18,5 @@ func (app *application) router() http.Handler {
 	router.HandlerFunc(http.MethodGet, "/v1/short-urls", app.GetShortUrls)
 	router.HandlerFunc(http.MethodDelete, "/v1/short-urls/:id", app.DeleteShortUrl)
 
-	return app.recordVisit(app.recoverPanic(router))
+	return app.enableCORS(app.recordVisit(app.recoverPanic(router)))
 }

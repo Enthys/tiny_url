@@ -49,6 +49,9 @@ func loadConfig() *config {
 
 	flag.Parse()
 
+	if cfg.cors.trustedOrigins == nil {
+		cfg.cors.trustedOrigins = []string{"http://localhost:3000", "http://127.0.0.1:3000"}
+	}
 	if os.Getenv("DB_DSN") != "" && cfg.db.dsn == "" {
 		cfg.db.dsn = os.Getenv("DB_DSN")
 	}
